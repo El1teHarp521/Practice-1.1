@@ -1,0 +1,114 @@
+// --- Переменные ---
+$bg-body: #000000;
+$bg-card: #111111;
+$text-main: #ffffff;
+$text-muted: #666666;
+$accent: #ffffff;
+$radius: 20px;
+
+// --- Миксины ---
+@mixin btn-bw {
+    background-color: $accent;
+    color: $bg-body;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+// --- Базовые стили ---
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: $bg-body;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+// --- Карточка товара ---
+.product-card {
+    background-color: $bg-card;
+    width: 340px;
+    border-radius: $radius;
+    border: 1px solid #333;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.05);
+
+    &__image-box {
+        width: 100%;
+        height: 250px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: grayscale(100%);
+    }
+
+    &__info {
+        padding: 24px;
+    }
+
+    &__title {
+        color: $text-main;
+        font-size: 20px;
+        margin: 0 0 12px;
+        line-height: 1.3;
+    }
+
+    &__desc {
+        color: $text-muted;
+        font-size: 13px;
+        margin-bottom: 25px;
+        line-height: 1.5;
+    }
+
+    &__bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        border-top: 1px solid #333;
+        padding-top: 20px;
+    }
+
+    &__prices {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__old-price {
+        color: $text-muted;
+        font-size: 14px;
+        text-decoration: line-through;
+        margin-bottom: 4px;
+    }
+
+    &__new-price {
+        color: $text-main;
+        font-size: 24px;
+        font-weight: 700;
+    }
+}
+
+// --- Кнопка ---
+.btn {
+    @include btn-bw;
+}

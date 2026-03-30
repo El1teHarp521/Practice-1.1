@@ -1,0 +1,143 @@
+
+$bg-body: #0a0a0c; 
+$bg-card: #141418;
+$text-main: #ffffff;
+$text-muted: #8e8e93;
+$accent: #ffffff;
+$radius: 24px;
+
+@keyframes floatIn { 0% { opacity: 0; transform: translateY(40px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes floatUp { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
+
+body {
+    margin: 0; padding: 0; font-family: 'Montserrat', sans-serif;
+    background-color: $bg-body; color: $text-main;
+    background-image: radial-gradient(circle at 50% -20%, #202028 0%, $bg-body 70%);
+    background-attachment: fixed;
+}
+
+.app-container { max-width: 1300px; margin: 0 auto; padding: 60px 20px; }
+
+.app-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 60px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 30px;
+    h1 { margin: 0; font-weight: 900; font-size: 32px; letter-spacing: 4px; }
+}
+
+.user-panel {
+    display: flex; align-items: center; gap: 15px;
+    .user-info { display: flex; flex-direction: column; align-items: flex-end; b { font-size: 16px; } .role-tag { font-size: 10px; color: #4ade80; text-transform: uppercase; letter-spacing: 1px; } }
+}
+
+// --- КНОПКИ ---
+.btn {
+    padding: 12px 24px; border-radius: 12px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s;
+    &--create { background: #fff; color: #000; &:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255,255,255,0.15); } }
+    &--outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.15); &:hover { background: rgba(255,255,255,0.08); border-color: #fff; } }
+    &--full { width: 100%; margin-top: 10px; padding: 15px; }
+}
+
+// --- СЕТКА ТОВАРОВ ---
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 40px; }
+.product-card {
+    background: $bg-card; border-radius: $radius; border: 1px solid rgba(255, 255, 255, 0.04); overflow: hidden; display: flex; flex-direction: column; transition: 0.4s ease; animation: floatIn 0.8s backwards;
+    &:hover { transform: translateY(-10px); border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 30px 60px rgba(0,0,0,0.7); .product-card__img { transform: scale(1.15); } }
+    &__image-box { position: relative; height: 280px; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    &__badge { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); color: #fff; padding: 6px 12px; border-radius: 30px; font-size: 10px; font-weight: 700; z-index: 5; }
+    &__img { width: 85%; height: 85%; object-fit: contain; transition: 0.6s ease; mix-blend-mode: darken; }
+    &__info { padding: 30px; flex-grow: 1; }
+    &__title { font-size: 22px; margin: 0 0 10px; font-weight: 800; }
+    &__desc { color: $text-muted; font-size: 15px; line-height: 1.6; margin-bottom: 20px; height: 48px; overflow: hidden; }
+    &__bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+    &__price { font-size: 24px; font-weight: 900; }
+}
+
+.icon-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-left: 8px;
+    &:hover { border-color: #fff; }
+    &--delete { color: #ff453a; &:hover { background: rgba(255,69,58,0.1); border-color: #ff453a; } }
+}
+
+
+// МОДАЛЬНЫЕ ОКНА
+
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px;
+}
+
+.modal-card {
+    background: #111114; border: 1px solid rgba(255,255,255,0.08); border-radius: $radius; width: 100%; max-width: 450px; padding: 40px; position: relative; box-shadow: 0 40px 80px rgba(0,0,0,0.9); animation: floatUp 0.4s ease-out;
+    &--large { max-width: 700px; }
+}
+
+.modal-header {
+    margin-bottom: 30px; text-align: center;
+    h2 { margin: 0; font-size: 26px; font-weight: 800; }
+    p { color: $text-muted; font-size: 14px; margin: 8px 0 0; }
+}
+
+.modal-close {
+    position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: #555; cursor: pointer; font-size: 20px; transition: 0.2s;
+    &:hover { color: #fff; transform: rotate(90deg); }
+}
+
+// --- ФОРМА АВТОРИЗАЦИИ ---
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+
+    input {
+        width: 100%;
+        background: #000 !important;
+        border: 1px solid #222;
+        color: #fff;
+        padding: 14px 18px;
+        border-radius: 14px;
+        font-family: inherit;
+        outline: none;
+        font-size: 15px;
+        box-sizing: border-box;
+        transition: 0.2s;
+        
+        &:focus { border-color: #555; background: #050505 !important; }
+        
+        &:-webkit-autofill {
+            -webkit-text-fill-color: white !important;
+            -webkit-box-shadow: 0 0 0px 1000px #000 inset !important;
+        }
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+}
+
+.auth-error {
+    background: rgba(255, 69, 58, 0.1); color: #ff453a; padding: 12px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; border: 1px solid rgba(255, 69, 58, 0.2); text-align: center;
+}
+
+.auth-toggle {
+    margin-top: 25px; font-size: 14px; color: $text-muted; text-align: center;
+    span { color: #fff; cursor: pointer; font-weight: 800; text-decoration: underline; margin-left: 5px; }
+}
+
+// --- СТИЛИ АДМИНКИ ---
+.admin-scroll-area { max-height: 60vh; overflow-y: auto; padding-right: 10px; &::-webkit-scrollbar { width: 4px; } &::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; } }
+.admin-grid { display: flex; flex-direction: column; gap: 15px; }
+.user-manage-card {
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); padding: 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center;
+    &.is-blocked { opacity: 0.6; border-color: rgba(255, 69, 58, 0.3); }
+}
+.user-manage-info {
+    display: flex; align-items: center; gap: 18px;
+    .user-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, #444, #111); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 18px; }
+    .user-name { font-weight: 800; font-size: 17px; }
+    .user-email { color: $text-muted; font-size: 13px; }
+}
+.admin-select-wrapper { position: relative; &::after { content: '▼'; font-size: 10px; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #555; pointer-events: none; } }
+.admin-select { appearance: none; background: #000; color: #fff; border: 1px solid #222; padding: 10px 35px 10px 15px; border-radius: 10px; cursor: pointer; outline: none; }
