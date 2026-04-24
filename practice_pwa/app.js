@@ -1,64 +1,79 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { Sequelize, DataTypes } = require('sequelize');
+const mongoose = require('mongoose');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
 app.use(express.json());
 app.use(cors());
 
-//    1. ПОДКЛЮЧЕНИЕ К POSTGRES (через .env)
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD,
-    {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        dialect: 'postgres',
-        logging: false
-    }
-);
+// ==========================================
+//    1. SQL (PostgreSQL) - НАСТРОЙКА
+// ==========================================
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
+    dialect: 'postgres',
+    logging: false
+});
 
-sequelize.authenticate()
-    .then(() => console.log(`✅ БД "${process.env.DB_NAME}" подключена!`))
-    .catch(err => console.error('❌ Ошибка подключения к БД:', err.message));
-
-//    2. МОДЕЛЬ USER
-const User = sequelize.define('User', {
+const SqlUser = sequelize.define('User', {
     first_name: { type: DataTypes.STRING, allowNull: false },
     last_name: { type: DataTypes.STRING, allowNull: false },
     age: { type: DataTypes.INTEGER, allowNull: false }
-}, {
-    underscored: true,
-    timestamps: true
-});
+}, { underscored: true, timestamps: true });
 
-sequelize.sync();
+sequelize.sync()
+    .then(() => console.log('🐘 SQL (PostgreSQL): ПОДКЛЮЧЕНО'))
+    .catch(err => console.log('⚠️ SQL (PostgreSQL): НЕ ДОСТУПЕН'));
 
-//    3. SWAGGER КОНФИГУРАЦИЯ
-const swaggerSpec = swaggerJsdoc({
+// ==========================================
+//    2. NoSQL (MongoDB) - НАСТРОЙКА
+// ==========================================
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('🍃 NoSQL (MongoDB): ПОДКЛЮЧЕНО'))
+    .catch(err => console.log('⚠️ NoSQL (MongoDB): ОШИБКА'));
+
+const nosqlUserSchema = new mongoose.Schema({
+    first_name: { type: String, required: true },
+    last_name: { type: String, required: true },
+    age: { type: Number, required: true },
+    created_at: { type: Number, default: () => Math.floor(Date.now() / 1000) },
+    updated_at: { type: Number, default: () => Math.floor(Date.now() / 1000) }
+}, { versionKey: false });
+
+const NosqlUser = mongoose.model('NosqlUser', nosqlUserSchema);
+
+// ==========================================
+//    3. SWAGGER - НАСТРОЙКА
+// ==========================================
+const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
-        info: { title: 'Practice 18: PostgreSQL API', version: '1.0.0' },
+        info: { title: 'Practice 19 & 20: Full Hybrid API', version: '1.5.0' },
         servers: [{ url: `http://localhost:${port}` }],
     },
-    apis: ['./app.js'],
-});
+    apis: [path.join(__dirname, 'app.js')],
+};
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-//    4. МАРШРУТЫ USERS
+
+// ==========================================
+//    МАРШРУТЫ SQL (PostgreSQL)
+// ==========================================
 
 /**
  * @swagger
- * /api/users:
+ * /api/sql/users:
  *   post:
- *     summary: Создание нового пользователя
- *     tags: [Users]
+ *     summary: "[SQL] Создать пользователя"
+ *     tags: [Users SQL]
  *     requestBody:
  *       required: true
  *       content:
@@ -70,65 +85,43 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  *               last_name: { type: string, example: "Иванов" }
  *               age: { type: integer, example: 25 }
  *     responses:
- *       201: { description: "Пользователь создан" }
- */
-app.post('/api/users', async (req, res) => {
-    try {
-        const user = await User.create(req.body);
-        res.status(201).json(user);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-/**
- * @swagger
- * /api/users:
+ *       201: { description: "Создано" }
  *   get:
- *     summary: Получение списка пользователей
- *     tags: [Users]
+ *     summary: "[SQL] Получить всех пользователей"
+ *     tags: [Users SQL]
  *     responses:
  *       200: { description: "Список получен" }
  */
-app.get('/api/users', async (req, res) => {
+app.post('/api/sql/users', async (req, res) => {
     try {
-        const users = await User.findAll();
+        const user = await SqlUser.create(req.body);
+        res.status(201).json(user);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/api/sql/users', async (req, res) => {
+    try {
+        const users = await SqlUser.findAll();
         res.json(users);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 /**
  * @swagger
- * /api/users/{id}:
+ * /api/sql/users/{id}:
  *   get:
- *     summary: Получение конкретного пользователя по id
- *     tags: [Users]
+ *     summary: "[SQL] Получить по ID"
+ *     tags: [Users SQL]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema: { type: integer }
  *     responses:
- *       200: { description: "Данные пользователя" }
- */
-app.get('/api/users/:id', async (req, res) => {
-    try {
-        const user = await User.findByPk(req.params.id);
-        if (user) res.json(user);
-        else res.status(404).json({ error: 'Не найден' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-/**
- * @swagger
- * /api/users/{id}:
+ *       200: { description: "OK" }
  *   patch:
- *     summary: Обновление информации пользователя
- *     tags: [Users]
+ *     summary: "[SQL] Обновить информацию"
+ *     tags: [Users SQL]
  *     parameters:
  *       - in: path
  *         name: id
@@ -144,27 +137,9 @@ app.get('/api/users/:id', async (req, res) => {
  *               age: { type: integer }
  *     responses:
  *       200: { description: "Обновлено" }
- */
-app.patch('/api/users/:id', async (req, res) => {
-    try {
-        const user = await User.findByPk(req.params.id);
-        if (user) {
-            await user.update(req.body);
-            res.json(user);
-        } else {
-            res.status(404).json({ error: 'Не найден' });
-        }
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-/**
- * @swagger
- * /api/users/{id}:
  *   delete:
- *     summary: Удаление пользователя
- *     tags: [Users]
+ *     summary: "[SQL] Удалить пользователя"
+ *     tags: [Users SQL]
  *     parameters:
  *       - in: path
  *         name: id
@@ -173,28 +148,132 @@ app.patch('/api/users/:id', async (req, res) => {
  *     responses:
  *       204: { description: "Удалено" }
  */
-app.delete('/api/users/:id', async (req, res) => {
+app.get('/api/sql/users/:id', async (req, res) => {
+    const user = await SqlUser.findByPk(req.params.id);
+    user ? res.json(user) : res.status(404).json({ error: "Не найден" });
+});
+
+app.patch('/api/sql/users/:id', async (req, res) => {
+    const user = await SqlUser.findByPk(req.params.id);
+    if (user) {
+        await user.update(req.body);
+        res.json(user);
+    } else res.status(404).json({ error: "Не найден" });
+});
+
+app.delete('/api/sql/users/:id', async (req, res) => {
+    const deleted = await SqlUser.destroy({ where: { id: req.params.id } });
+    deleted ? res.status(204).send() : res.status(404).json({ error: "Не найден" });
+});
+
+
+// ==========================================
+//    МАРШРУТЫ NoSQL (MongoDB)
+// ==========================================
+
+/**
+ * @swagger
+ * /api/nosql/users:
+ *   post:
+ *     summary: "[NoSQL] Создать пользователя"
+ *     tags: [Users NoSQL]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name: { type: string, example: "Михаил" }
+ *               last_name: { type: string, example: "Монгов" }
+ *               age: { type: integer, example: 30 }
+ *     responses:
+ *       201: { description: "Создано" }
+ *   get:
+ *     summary: "[NoSQL] Получить всех пользователей"
+ *     tags: [Users NoSQL]
+ *     responses:
+ *       200: { description: "Список получен" }
+ */
+app.post('/api/nosql/users', async (req, res) => {
     try {
-        const deleted = await User.destroy({ where: { id: req.params.id } });
-        if (deleted) res.status(204).send();
-        else res.status(404).json({ error: 'Не найден' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        const user = new NosqlUser(req.body);
+        res.status(201).json(await user.save());
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/api/nosql/users', async (req, res) => {
+    try {
+        const users = await NosqlUser.find();
+        res.json(users);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 /**
  * @swagger
- * /api/products:
+ * /api/nosql/users/{id}:
  *   get:
- *     summary: Получить список товаров
- *     tags: [Products]
+ *     summary: "[NoSQL] Получить по ID"
+ *     tags: [Users NoSQL]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200: { description: "OK" }
+ *   patch:
+ *     summary: "[NoSQL] Обновить информацию"
+ *     tags: [Users NoSQL]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name: { type: string }
+ *               age: { type: integer }
+ *     responses:
+ *       200: { description: "Обновлено" }
+ *   delete:
+ *     summary: "[NoSQL] Удалить пользователя"
+ *     tags: [Users NoSQL]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       204: { description: "Удалено" }
  */
-app.get('/api/products', (req, res) => {
-    res.json([{ id: 1, title: "Товар из П18", price: 100 }]);
+app.get('/api/nosql/users/:id', async (req, res) => {
+    try {
+        const user = await NosqlUser.findById(req.params.id);
+        user ? res.json(user) : res.status(404).json({ error: "Не найден" });
+    } catch (e) { res.status(400).json({ error: "Невалидный ID" }); }
+});
+
+app.patch('/api/nosql/users/:id', async (req, res) => {
+    try {
+        req.body.updated_at = Math.floor(Date.now() / 1000);
+        const user = await NosqlUser.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        user ? res.json(user) : res.status(404).json({ error: "Не найден" });
+    } catch (e) { res.status(400).json({ error: "Ошибка данных" }); }
+});
+
+app.delete('/api/nosql/users/:id', async (req, res) => {
+    try {
+        const user = await NosqlUser.findByIdAndDelete(req.params.id);
+        user ? res.status(204).send() : res.status(404).json({ error: "Не найден" });
+    } catch (e) { res.status(400).json({ error: "Невалидный ID" }); }
 });
 
 app.listen(port, () => {
-    console.log(`✅ Сервер запущен: http://localhost:${port}`);
-    console.log(`📖 Swagger: http://localhost:${port}/api-docs`);
+    console.log(`✅ СЕРВЕР: http://localhost:${port}`);
+    console.log(`📖 SWAGGER: http://localhost:${port}/api-docs`);
 });
